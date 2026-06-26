@@ -1,0 +1,85 @@
+@import '@fontsource-variable/inter';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 font-sans antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply tracking-tight;
+  }
+
+  /* Thin, unobtrusive scrollbars — mevak-style restraint */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 9999px;
+  }
+}
+
+@layer components {
+  /* Reusable surface + control primitives used across screens */
+  .card {
+    @apply rounded-xl border border-slate-200 bg-white shadow-card;
+  }
+
+  .input {
+    @apply form-input block w-full rounded-lg border-slate-300 bg-white text-sm text-slate-900
+      placeholder:text-slate-400 shadow-sm transition
+      focus:border-navy-500 focus:ring-2 focus:ring-navy-500/20;
+  }
+
+  .select {
+    @apply form-select block w-full rounded-lg border-slate-300 bg-white text-sm text-slate-900
+      shadow-sm transition focus:border-navy-500 focus:ring-2 focus:ring-navy-500/20;
+  }
+
+  .textarea {
+    @apply form-textarea block w-full rounded-lg border-slate-300 bg-white text-sm text-slate-900
+      placeholder:text-slate-400 shadow-sm transition
+      focus:border-navy-500 focus:ring-2 focus:ring-navy-500/20;
+  }
+
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-slate-700;
+  }
+
+  .section-title {
+    @apply text-xs font-semibold uppercase tracking-wider text-slate-400;
+  }
+
+  /* Dark sidebar rail — navy-tuned scrollbar so it reads as part of the surface */
+  .nav-scroll {
+    scrollbar-color: #25336b transparent;
+  }
+  .nav-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+  .nav-scroll::-webkit-scrollbar-thumb {
+    background: #25336b;
+    border-radius: 9999px;
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "name": "venuspro",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "VENUSPRO — Dynamic Form Platform (metadata-driven Form Builder, Rule & Rating Engine)",
+  "scripts": {
+    "dev": "vite",
+    "server": "node server/index.mjs",
+    "dev:full": "concurrently -k -n web,api -c cyan,green \"vite\" \"node server/index.mjs\"",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "tsc -b --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.106.0",
+    "@fontsource-variable/inter": "^5.1.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jspdf": "^4.2.1",
+    "lucide-react": "^0.460.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0",
+    "zustand": "^5.0.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/forms": "^0.5.9",
+    "@types/node": "^22.20.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^10.0.3",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.15",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  }
+}

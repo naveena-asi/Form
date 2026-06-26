@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:mevak.in)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:5173/preview)",
+      "Bash(tasklist)",
+      "Bash(npm run *)",
+      "Bash(curl *)",
+      "Bash(npx tsc *)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(gh auth *)",
+      "PowerShell(git ls-remote *)",
+      "PowerShell(git *)"
+    ]
+  }
+}
