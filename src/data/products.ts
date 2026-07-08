@@ -22,6 +22,7 @@ export interface ProductFormRef {
 
 export interface Product {
   id: string
+  baseProductId?: string
   carrierId: string
   name: string
   code: string

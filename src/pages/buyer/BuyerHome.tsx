@@ -1,13 +1,12 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Search, ShieldCheck, Check, ArrowRight, X, ChevronDown, List as ListIcon, Grid as GridIcon,
-  FileSearch, Star, Package, Building2, Umbrella, Laptop, Briefcase, Car, HardHat, UserCircle, ArrowLeft, ChevronLeft
+  Search, ShieldCheck, Check, ArrowRight, X,
+  FileSearch, Package, Building2, Umbrella, Laptop, Briefcase, Car, HardHat, UserCircle, ArrowLeft, ChevronLeft
 } from 'lucide-react'
 import { Card, Badge, Button } from '@/components/ui'
 import { Modal } from '@/components/ui/Modal'
 import { products, type Product } from '@/data/products'
-import { cn } from '@/lib/cn'
 
 const ALL_PRODUCT_TYPES = [
   'General Liability',
@@ -47,11 +46,9 @@ export default function BuyerHome() {
   // Filters
   const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set())
   const [coverageNeeds, setCoverageNeeds] = useState('')
-  const [businessType, setBusinessType] = useState('')
   const [stateFilter] = useState('Texas (TX)')
 
   // View
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
   const [sortBy, setSortBy] = useState('Relevance')
   const [selectedCategory, setSelectedCategory] = useState<Product | null>(null)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)

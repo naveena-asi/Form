@@ -89,7 +89,7 @@ export function CardHeader({
 }
 
 // ── Badge / StatusPill ────────────────────────────────────────────────────
-type Tone = 'navy' | 'green' | 'amber' | 'gray' | 'red' | 'blue' | 'purple'
+type Tone = 'navy' | 'green' | 'amber' | 'gray' | 'red' | 'blue' | 'purple' | 'pink'
 
 const tones: Record<Tone, string> = {
   navy: 'bg-navy-50 text-navy-700 ring-navy-200',
@@ -99,6 +99,7 @@ const tones: Record<Tone, string> = {
   red: 'bg-red-50 text-red-700 ring-red-200',
   blue: 'bg-blue-50 text-blue-700 ring-blue-200',
   purple: 'bg-purple-50 text-purple-700 ring-purple-200',
+  pink: 'bg-pink-50 text-pink-700 ring-pink-200',
 }
 
 export function Badge({
