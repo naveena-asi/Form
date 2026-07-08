@@ -27,9 +27,17 @@ import CustomerHome from '@/pages/customer/CustomerHome'
 import MyPolicies from '@/pages/customer/MyPolicies'
 import PolicyDetail from '@/pages/customer/PolicyDetail'
 import QuotePicker from '@/pages/customer/QuotePicker'
+import { BuyerShell } from '@/components/layout/BuyerShell'
+import BuyerHome from '@/pages/buyer/BuyerHome'
+import BuyerApply from '@/pages/buyer/BuyerApply'
 import Carriers from '@/pages/admin/Carriers'
 import Products from '@/pages/admin/Products'
 import GuardrailsPage from '@/pages/Guardrails'
+import TemplateLibrary from '@/pages/documents/TemplateLibrary'
+import DocumentBuilder from '@/pages/documents/DocumentBuilder'
+import ClauseLibrary from '@/pages/documents/ClauseLibrary'
+import DocumentPackages from '@/pages/documents/DocumentPackages'
+import Applications from '@/pages/admin/Applications'
 
 function AdminLayout() {
   return (
@@ -53,9 +61,16 @@ export default function App() {
         <Route path="/portal/policies/:id" element={<PolicyDetail />} />
       </Route>
 
+      {/* Buyer Marketplace Portal */}
+      <Route element={<BuyerShell />}>
+        <Route path="/buyer" element={<BuyerHome />} />
+        <Route path="/buyer/apply/:productId" element={<BuyerApply />} />
+      </Route>
+
       {/* Admin / designer app */}
       <Route element={<AdminLayout />}>
         <Route path="/" element={<Dashboard />} />
+        <Route path="/applications" element={<Applications />} />
         <Route path="/forms" element={<FormList />} />
         <Route path="/carriers" element={<Carriers />} />
         <Route path="/products" element={<Products />} />
@@ -74,6 +89,11 @@ export default function App() {
         <Route path="/preview" element={<RuntimePreview />} />
         <Route path="/review" element={<ReviewSubmit />} />
         <Route path="/outputs" element={<Outputs />} />
+        <Route path="/documents" element={<TemplateLibrary />} />
+        <Route path="/documents/templates" element={<TemplateLibrary />} />
+        <Route path="/documents/builder/:id" element={<DocumentBuilder />} />
+        <Route path="/documents/clauses" element={<ClauseLibrary />} />
+        <Route path="/documents/packages" element={<DocumentPackages />} />
         <Route path="/versions" element={<Versioning />} />
         <Route path="/audit" element={<AuditModule />} />
         <Route path="/api" element={<ApiLayer />} />

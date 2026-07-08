@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   ChevronLeft,
@@ -9,15 +10,34 @@ import {
   Download,
   Calendar,
   Building2,
+  Eye,
+  PenLine,
+  Sparkles,
+  ChevronDown,
+  Clock,
+  AlertTriangle,
+  Info,
+  CheckCircle2,
+  Upload
 } from 'lucide-react'
 import { usePolicyStore } from '@/store/usePolicyStore'
 import { getProduct } from '@/data/products'
 import { getCarrier } from '@/data/carriers'
-import { Badge, Card } from '@/components/ui'
+import { Badge, Button, Card } from '@/components/ui'
 import { policyTone } from './CustomerHome'
 import { useStartTransaction } from '@/lib/useStartTransaction'
 import { toast } from '@/store/useToast'
 import { cn } from '@/lib/cn'
+import { useDocumentStore } from '@/store/useDocumentStore'
+import { generateDocuments } from '@/engines/documentEngine'
+import { DOC_TYPE_LABEL, type DocumentInstance, type MergeContext } from '@/data/documents'
+import {
+  DocumentViewerModal,
+  INSTANCE_TONE,
+  isUnsigned,
+  templateHasSignature,
+  downloadInstance,
+} from '@/components/documents/DocumentViewerModal'
 
 export default function PolicyDetail() {
   const { id = '' } = useParams()
@@ -26,6 +46,40 @@ export default function PolicyDetail() {
   const policy = usePolicyStore((s) => s.policies.find((p) => p.id === id))
   const product = policy ? getProduct(policy.productId) : undefined
   const carrier = policy ? getCarrier(policy.carrierId) : undefined
+
+  const allInstances = useDocumentStore((s) => s.instances)
+  const getTemplate = useDocumentStore((s) => s.getTemplate)
+  const instances = useMemo(
+    () =>
+      allInstances
+        .filter((i) => i.policyId === id)
+        .slice()
+        .sort((a, b) => b.generatedAt.localeCompare(a.generatedAt)),
+    [allInstances, id],
+  )
+  const [viewer, setViewer] = useState<{ instance: DocumentInstance; sign: boolean } | null>(null)
+  const [showSuperseded, setShowSuperseded] = useState(false)
+
+  const active = instances.filter((i) => i.status !== 'Superseded')
+  const superseded = instances.filter((i) => i.status === 'Superseded')
+
+  const handleGenerate = () => {
+    if (!policy) return
+    const ctx: MergeContext = {
+      policy,
+      product,
+      carrier,
+      answers: {},
+      now: new Date().toISOString(),
+    }
+    const created = generateDocuments('bound', ctx)
+    toast(
+      created.length
+        ? `Generated ${created.length} document${created.length === 1 ? '' : 's'}.`
+        : 'No documents were generated.',
+      created.length ? 'success' : 'error',
+    )
+  }
 
   if (!policy) {
     return (
@@ -57,6 +111,66 @@ export default function PolicyDetail() {
       <button onClick={() => navigate('/portal/policies')} className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-800">
         <ChevronLeft className="h-4 w-4" /> My Policies
       </button>
+
+      {/* Dynamic Status Banners for Pending Applications */}
+      {policy.status === 'Info Requested' && (
+        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-5">
+          <div className="flex items-start gap-4">
+            <AlertTriangle className="h-6 w-6 shrink-0 text-amber-600 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="text-sm font-bold text-amber-900">Action Required: Additional Information Needed</h3>
+              <p className="mt-1 text-sm text-amber-700">Underwriting cannot proceed until you provide the following documents: <b>5-Year Loss Runs</b> and <b>Audited Financial Statements</b>.</p>
+              <Button variant="primary" icon={Upload} className="mt-4 bg-amber-600 hover:bg-amber-700 text-white border-transparent" onClick={() => alert('Opening file uploader...')}>
+                Upload Documents
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {policy.status === 'Quoted' && (
+        <div className="mb-6 rounded-xl border border-indigo-200 bg-indigo-50 p-5">
+          <div className="flex items-start gap-4">
+            <Sparkles className="h-6 w-6 shrink-0 text-indigo-600 mt-0.5" />
+            <div className="flex-1 flex justify-between items-center">
+              <div>
+                <h3 className="text-sm font-bold text-indigo-900">Quote Ready to Bind</h3>
+                <p className="mt-1 text-sm text-indigo-700">Your application has been approved. Review your quote letter below and bind coverage today.</p>
+              </div>
+              <Button variant="primary" icon={CheckCircle2} className="bg-indigo-600 hover:bg-indigo-700" onClick={() => {
+                toast('Payment processed successfully. Policy is now active.', 'success')
+                navigate('/portal')
+              }}>
+                Accept & Pay ${policy.premium.toLocaleString()}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {policy.status === 'Declined' && (
+        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-5">
+          <div className="flex items-start gap-4">
+            <XCircle className="h-6 w-6 shrink-0 text-red-600 mt-0.5" />
+            <div>
+              <h3 className="text-sm font-bold text-red-900">Application Declined</h3>
+              <p className="mt-1 text-sm text-red-700">Unfortunately, we are unable to offer coverage for this risk at this time due to high loss history in the provided class code.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {policy.status === 'Under Review' && (
+        <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-5">
+          <div className="flex items-start gap-4">
+            <Info className="h-6 w-6 shrink-0 text-blue-600 mt-0.5" />
+            <div>
+              <h3 className="text-sm font-bold text-blue-900">Application Under Review</h3>
+              <p className="mt-1 text-sm text-blue-700">Your application has been successfully submitted and is currently being evaluated by our underwriting team. We will notify you once a decision is made.</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Header */}
       <div className="mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
@@ -112,46 +226,169 @@ export default function PolicyDetail() {
 
           {/* Documents */}
           <Card className="p-5">
-            <div className="mb-3 text-sm font-semibold text-slate-900">Documents</div>
+            <div className="mb-3 flex items-center justify-between">
+              <div className="text-sm font-semibold text-slate-900">Documents</div>
+              {instances.length > 0 && (
+                <span className="text-xs text-slate-400">{instances.length} issued</span>
+              )}
+            </div>
+
+            {instances.length === 0 ? (
+              // No generated documents yet — show the legacy labels as pending items
+              // and offer to generate the real 'bound' document package.
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  {policy.documents.map((d) => (
+                    <div
+                      key={d}
+                      className="flex items-center justify-between rounded-lg border border-dashed border-slate-200 px-3 py-2.5 text-sm text-slate-400"
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <FileText className="h-4 w-4" strokeWidth={1.75} /> {d}
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-xs">
+                        <Clock className="h-3.5 w-3.5" /> Pending
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <Button variant="primary" icon={Sparkles} className="w-full" onClick={handleGenerate}>
+                  Generate documents
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {active.map((i) => {
+                  const canSign = isUnsigned(i) && templateHasSignature(getTemplate(i.templateId))
+                  return (
+                    <div
+                      key={i.id}
+                      className="rounded-lg border border-slate-200 px-3 py-2.5 transition hover:bg-slate-50"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 text-sm font-medium text-slate-800">
+                            <FileText className="h-4 w-4 shrink-0 text-navy-500" strokeWidth={1.75} />
+                            <span className="truncate">{DOC_TYPE_LABEL[i.type]}</span>
+                          </div>
+                          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 pl-6 text-xs text-slate-400">
+                            <span className="font-mono">{i.number}</span>
+                            <span className="text-slate-300">·</span>
+                            <span>v{i.version}</span>
+                            <span className="text-slate-300">·</span>
+                            <span>{i.generatedAt.slice(0, 10)}</span>
+                          </div>
+                        </div>
+                        <Badge tone={INSTANCE_TONE[i.status]} className="shrink-0">
+                          {i.status}
+                        </Badge>
+                      </div>
+                      <div className="mt-2 flex items-center gap-1.5 pl-6">
+                        <Button size="sm" variant="subtle" icon={Eye} onClick={() => setViewer({ instance: i, sign: false })}>
+                          View
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          icon={Download}
+                          onClick={() => downloadInstance(i)}
+                        >
+                          Download
+                        </Button>
+                        {canSign && (
+                          <Button
+                            size="sm"
+                            variant="primary"
+                            icon={PenLine}
+                            onClick={() => setViewer({ instance: i, sign: true })}
+                          >
+                            e-Sign
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+
+                {superseded.length > 0 && (
+                  <div className="pt-1">
+                    <button
+                      onClick={() => setShowSuperseded((v) => !v)}
+                      className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-xs font-medium text-slate-500 transition hover:bg-slate-50"
+                    >
+                      <span>
+                        Superseded documents ({superseded.length})
+                      </span>
+                      <ChevronDown
+                        className={cn('h-4 w-4 transition', showSuperseded && 'rotate-180')}
+                      />
+                    </button>
+                    {showSuperseded && (
+                      <div className="mt-1 space-y-2">
+                        {superseded.map((i) => (
+                          <div
+                            key={i.id}
+                            className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2 text-sm"
+                          >
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 text-slate-500">
+                                <FileText className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+                                <span className="truncate line-through">{DOC_TYPE_LABEL[i.type]}</span>
+                              </div>
+                              <div className="pl-6 font-mono text-xs text-slate-400">{i.number}</div>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              icon={Eye}
+                              onClick={() => setViewer({ instance: i, sign: false })}
+                            >
+                              View
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </Card>
+        </div>
+
+        {/* Actions - Only visible if the policy is active/bound */}
+        {['Active', 'Pending Renewal', 'Cancelled', 'Expired'].includes(policy.status) && (
+          <Card className="self-start p-5">
+            <div className="mb-3 text-sm font-semibold text-slate-900">Manage this policy</div>
             <div className="space-y-2">
-              {policy.documents.map((d) => (
+              {actions.map((a) => (
                 <button
-                  key={d}
-                  onClick={() => toast(`Downloading “${d}”…`)}
-                  className="flex w-full items-center justify-between rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50"
+                  key={a.kind}
+                  onClick={() => start(a.kind, { policy })}
+                  className="flex w-full items-center gap-3 rounded-lg border border-slate-200 p-3 text-left transition hover:border-navy-200 hover:bg-slate-50"
                 >
-                  <span className="inline-flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-navy-500" strokeWidth={1.75} /> {d}
+                  <span className={cn('grid h-9 w-9 shrink-0 place-items-center rounded-lg', toneCls[a.tone])}>
+                    <a.icon className="h-5 w-5" strokeWidth={1.75} />
                   </span>
-                  <Download className="h-4 w-4 text-slate-400" />
+                  <div>
+                    <div className="text-sm font-medium text-slate-800">{a.label}</div>
+                    <div className="text-xs text-slate-400">{a.desc}</div>
+                  </div>
                 </button>
               ))}
             </div>
           </Card>
-        </div>
-
-        {/* Actions */}
-        <Card className="self-start p-5">
-          <div className="mb-3 text-sm font-semibold text-slate-900">Manage this policy</div>
-          <div className="space-y-2">
-            {actions.map((a) => (
-              <button
-                key={a.kind}
-                onClick={() => start(a.kind, { policy })}
-                className="flex w-full items-center gap-3 rounded-lg border border-slate-200 p-3 text-left transition hover:border-navy-200 hover:bg-slate-50"
-              >
-                <span className={cn('grid h-9 w-9 shrink-0 place-items-center rounded-lg', toneCls[a.tone])}>
-                  <a.icon className="h-5 w-5" strokeWidth={1.75} />
-                </span>
-                <div>
-                  <div className="text-sm font-medium text-slate-800">{a.label}</div>
-                  <div className="text-xs text-slate-400">{a.desc}</div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </Card>
+        )}
       </div>
+
+      {viewer && (
+        <DocumentViewerModal
+          instance={viewer.instance}
+          open
+          focusSign={viewer.sign}
+          onClose={() => setViewer(null)}
+        />
+      )}
     </div>
   )
 }

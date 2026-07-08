@@ -7,6 +7,37 @@ import { create } from 'zustand'
 import { seedPolicies, type Coverage, type Policy } from '@/data/policies'
 import type { Product } from '@/data/products'
 import { uid } from '@/lib/uid'
+import type { DocEvent } from '@/data/documents'
+import { buildMergeContext } from '@/lib/mergeContext'
+import { generateDocuments } from '@/engines/documentEngine'
+import { useFormStore } from '@/store/useFormStore'
+import { rate } from '@/engines/ratingEngine'
+
+// Map the active applicant-flow transaction kind to the document lifecycle event
+// whose package should be generated once the policy is bound/updated.
+const KIND_EVENT: Record<string, DocEvent> = {
+  quote: 'bound',
+  endorsement: 'endorsed',
+  cancellation: 'cancelled',
+  renewal: 'renewed',
+  claim: 'claimOpened',
+}
+
+/**
+ * Generate (and persist) the document package for a freshly bound/updated policy.
+ * Pulls the live runtime answers + form so the rated result and merge tokens match
+ * what the applicant just submitted. Best-effort — never blocks the policy write.
+ */
+function generatePolicyDocuments(policy: Policy, event: DocEvent) {
+  try {
+    const { answers, runtimeForm } = useFormStore.getState()
+    const rating = runtimeForm ? rate(runtimeForm, answers) : undefined
+    const ctx = buildMergeContext({ policy, answers, rating, now: new Date().toISOString() })
+    generateDocuments(event, ctx)
+  } catch {
+    /* document generation is non-blocking — ignore failures */
+  }
+}
 
 const STORAGE_KEY = 'venuspro.policies.v1'
 
@@ -80,15 +111,26 @@ export const usePolicyStore = create<PolicyState>((set, get) => ({
       persist(policies)
       return { policies }
     })
+    // Binding always closes a quote → generate the 'bound' document package.
+    generatePolicyDocuments(policy, 'bound')
     return policy
   },
 
-  updatePolicy: (id, patch) =>
+  updatePolicy: (id, patch) => {
     set((s) => {
       const policies = s.policies.map((p) => (p.id === id ? { ...p, ...patch } : p))
       persist(policies)
       return { policies }
-    }),
+    })
+    // A policy-bound action (endorse / cancel / renew) drives the matching package,
+    // but only when it is the active applicant transaction for this exact policy.
+    const txn = useFormStore.getState().txnContext
+    const event = txn && txn.policyId === id ? KIND_EVENT[txn.kind] : undefined
+    if (event && event !== 'bound') {
+      const updated = get().getPolicy(id)
+      if (updated) generatePolicyDocuments(updated, event)
+    }
+  },
 
   resetPolicies: () =>
     set(() => {

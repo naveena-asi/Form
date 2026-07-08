@@ -6,7 +6,7 @@ export interface Coverage {
   deductible?: string
 }
 
-export type PolicyStatus = 'Active' | 'Pending Renewal' | 'Cancelled' | 'Expired'
+export type PolicyStatus = 'Active' | 'Pending Renewal' | 'Cancelled' | 'Expired' | 'Under Review' | 'Info Requested' | 'Quoted' | 'Declined'
 
 export interface Policy {
   id: string
@@ -83,5 +83,64 @@ export const seedPolicies: Policy[] = [
       { name: "Employers' Liability", limit: '$500,000' },
     ],
     documents: ['Policy Declarations', 'Experience Mod Worksheet'],
+  },
+  {
+    id: 'app-umb',
+    number: 'APP-UMB-55421',
+    productId: 'prod-umb',
+    carrierId: 'car-vpro',
+    product: 'Commercial Umbrella',
+    status: 'Under Review',
+    premium: 0,
+    effectiveDate: 'Pending',
+    expirationDate: 'Pending',
+    insured: 'Summit Logistics LLC',
+    coverages: [],
+    documents: [],
+  },
+  {
+    id: 'app-cyb',
+    number: 'APP-CYB-55422',
+    productId: 'prod-cyb',
+    carrierId: 'car-summit',
+    product: 'Cyber Liability',
+    status: 'Info Requested',
+    premium: 0,
+    effectiveDate: 'Pending',
+    expirationDate: 'Pending',
+    insured: 'Summit Logistics LLC',
+    coverages: [],
+    documents: [],
+  },
+  {
+    id: 'app-bop',
+    number: 'APP-BOP-55423',
+    productId: 'prod-bop',
+    carrierId: 'car-vpro',
+    product: 'Business Owners Policy',
+    status: 'Quoted',
+    premium: 2450,
+    effectiveDate: '2024-11-01',
+    expirationDate: '2025-11-01',
+    insured: 'Summit Logistics LLC',
+    coverages: [
+      { name: 'General Liability', limit: '$1,000,000' },
+      { name: 'Business Personal Property', limit: '$250,000' },
+    ],
+    documents: ['Quote Letter'],
+  },
+  {
+    id: 'app-prof',
+    number: 'APP-PROF-55424',
+    productId: 'prod-prof',
+    carrierId: 'car-summit',
+    product: 'Professional Liability',
+    status: 'Declined',
+    premium: 0,
+    effectiveDate: 'Declined',
+    expirationDate: 'Declined',
+    insured: 'Summit Logistics LLC',
+    coverages: [],
+    documents: ['Decline Notice'],
   },
 ]

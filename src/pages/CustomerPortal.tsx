@@ -97,6 +97,9 @@ export default function CustomerPortal() {
         next.setFullYear(next.getFullYear() + 1)
         updatePolicy(ctx.policyId, { status: 'Active', effectiveDate: new Date().toISOString().slice(0, 10), expirationDate: next.toISOString().slice(0, 10) })
       }
+      // An endorsement keeps the policy active; the empty patch re-persists it so the
+      // 'endorsed' package (endorsement notice + revised, superseding Declarations) fires.
+      else if (ctx.kind === 'endorsement') updatePolicy(ctx.policyId, {})
     }
     setPhase('done')
   }

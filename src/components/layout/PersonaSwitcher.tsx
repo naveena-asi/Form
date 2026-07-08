@@ -1,16 +1,20 @@
 import { useLocation, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, UserRound, ChevronDown } from 'lucide-react'
+import { LayoutDashboard, UserRound, ChevronDown, Briefcase } from 'lucide-react'
 import { Dropdown } from '@/components/ui/Dropdown'
 
-/** Switches between the Admin Console and the Customer Portal personas. */
+/** Switches between the Admin Console, Customer Portal, and Buyer Portal personas. */
 export function PersonaSwitcher() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const isCustomer = pathname.startsWith('/portal') || pathname === '/apply'
+  const isBuyer = pathname.startsWith('/buyer')
 
-  const current = isCustomer
-    ? { label: 'Customer', icon: UserRound }
-    : { label: 'Admin', icon: LayoutDashboard }
+  let current = { label: 'Admin', icon: LayoutDashboard }
+  if (isCustomer) {
+    current = { label: 'Customer', icon: UserRound }
+  } else if (isBuyer) {
+    current = { label: 'Buyer', icon: Briefcase }
+  }
 
   return (
     <Dropdown
@@ -36,7 +40,13 @@ export function PersonaSwitcher() {
           icon: UserRound,
           onClick: () => navigate('/portal'),
         },
+        {
+          label: 'Buyer Portal',
+          icon: Briefcase,
+          onClick: () => navigate('/buyer'),
+        },
       ]}
     />
   )
 }
+

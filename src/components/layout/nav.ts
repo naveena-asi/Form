@@ -15,6 +15,8 @@ import {
   FileOutput,
   History,
   ScrollText,
+  FileText,
+  FileStack,
   Plug,
   Settings,
   Users,
@@ -42,6 +44,7 @@ export const navGroups: NavGroup[] = [
     title: 'Workspace',
     items: [
       { label: 'Dashboard', to: '/', icon: LayoutDashboard, end: true },
+      { label: 'Applications', to: '/applications', icon: ClipboardCheck },
       { label: 'Form Library', to: '/forms', icon: Files },
     ],
   },
@@ -75,6 +78,14 @@ export const navGroups: NavGroup[] = [
       { label: 'Preview (Live)', to: '/preview', icon: PlayCircle },
       { label: 'Review & Submit', to: '/review', icon: ClipboardCheck },
       { label: 'Outputs', to: '/outputs', icon: FileOutput },
+    ],
+  },
+  {
+    title: 'Documents',
+    items: [
+      { label: 'Templates', to: '/documents', icon: FileText },
+      { label: 'Clause Library', to: '/documents/clauses', icon: ScrollText },
+      { label: 'Packages', to: '/documents/packages', icon: FileStack },
     ],
   },
   {

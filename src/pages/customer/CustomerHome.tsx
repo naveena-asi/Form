@@ -5,8 +5,13 @@ import { usePolicyStore } from '@/store/usePolicyStore'
 import { Badge } from '@/components/ui'
 import { cn } from '@/lib/cn'
 
-export const policyTone = (s: PolicyStatus): 'green' | 'amber' | 'red' | 'gray' =>
-  s === 'Active' ? 'green' : s === 'Pending Renewal' ? 'amber' : s === 'Cancelled' ? 'red' : 'gray'
+export const policyTone = (s: PolicyStatus): 'green' | 'amber' | 'red' | 'gray' | 'purple' | 'pink' | 'navy' =>
+  s === 'Active' ? 'green' : 
+  s === 'Pending Renewal' ? 'amber' : 
+  s === 'Quoted' ? 'purple' : 
+  s === 'Info Requested' ? 'pink' :
+  s === 'Under Review' ? 'navy' :
+  (s === 'Cancelled' || s === 'Declined') ? 'red' : 'gray'
 
 export default function CustomerHome() {
   const navigate = useNavigate()

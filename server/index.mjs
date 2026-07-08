@@ -120,6 +120,128 @@ app.post('/api/generate-form', async (req, res) => {
   }
 })
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Documents API — mock endpoints (no persistence, no secrets). Mirrors the shape
+// of src/data/documents.ts so the front-end and integrators can build against a
+// stable contract. Added after the AI route; existing routes are untouched.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Per-type number prefix (mirrors DOC_TYPE_PREFIX in src/data/documents.ts).
+const DOC_TYPE_PREFIX = {
+  Declarations: 'DEC', PolicyJacket: 'JKT', FormsSchedule: 'FRM', Certificate: 'COI',
+  AutoIDCard: 'IDC', EvidenceOfProperty: 'EOP', Binder: 'BND', Endorsement: 'END',
+  CancellationNotice: 'CAN', NonRenewalNotice: 'NON', ReinstatementNotice: 'RST',
+  Invoice: 'INV', Quote: 'QTE', RenewalOffer: 'REN', Notice: 'NOT', CoverLetter: 'LTR',
+}
+
+// Which document types each lifecycle event produces (mirrors defaultDocPackages).
+const EVENT_PACKAGE = {
+  bound: ['Declarations', 'PolicyJacket', 'FormsSchedule', 'Certificate', 'Invoice', 'CoverLetter'],
+  endorsed: ['Endorsement', 'Declarations'],
+  cancelled: ['CancellationNotice', 'Invoice'],
+  renewed: ['RenewalOffer', 'Declarations'],
+  nonRenewed: ['NonRenewalNotice'],
+  reinstated: ['ReinstatementNotice'],
+  claimOpened: ['Notice'],
+}
+
+const DELIVERY_CHANNELS = ['portal', 'email', 'esign', 'print']
+
+const isoNow = () => new Date().toISOString()
+const shortId = () => Math.random().toString(16).slice(2, 8)
+const docNumber = (policyId, type, seq) =>
+  `${policyId.toUpperCase()}-${DOC_TYPE_PREFIX[type] ?? 'DOC'}-${String(seq).padStart(4, '0')}`
+
+function mockInstance(policyId, type, seq, status = 'Issued') {
+  const id = `doc-${shortId()}`
+  const at = isoNow()
+  return {
+    id,
+    templateId: `tpl-${type.toLowerCase()}`,
+    type,
+    policyId,
+    number: docNumber(policyId, type, seq),
+    status,
+    version: 1,
+    generatedAt: at,
+    issuedAt: status === 'Draft' ? undefined : at,
+    url: `/documents/${id}.pdf`,
+    deliveries: [],
+  }
+}
+
+// POST /api/policies/:id/documents:generate  { event }
+// Note: the literal ':generate' custom-method suffix collides with Express path
+// params, so this route is matched with a RegExp (capture group = policy id).
+app.post(/^\/api\/policies\/([^/]+)\/documents:generate$/, (req, res) => {
+  const policyId = decodeURIComponent(req.params[0])
+  const event = (req.body?.event ?? '').toString()
+  const types = EVENT_PACKAGE[event]
+  if (!types) {
+    return res.status(400).json({ error: 'unknown_event', allowed: Object.keys(EVENT_PACKAGE) })
+  }
+  const generated = types.map((type, i) => mockInstance(policyId, type, i + 1))
+  res.status(201).json({ policyId, event, generated })
+})
+
+// GET /api/policies/:id/documents
+app.get('/api/policies/:id/documents', (req, res) => {
+  const policyId = req.params.id
+  const documents = [
+    mockInstance(policyId, 'Declarations', 1, 'Delivered'),
+    mockInstance(policyId, 'Invoice', 1, 'Issued'),
+  ].map((d) => ({
+    id: d.id,
+    type: d.type,
+    number: d.number,
+    status: d.status,
+    generatedAt: d.generatedAt,
+  }))
+  res.json({ policyId, documents })
+})
+
+// GET /api/documents/:id
+app.get('/api/documents/:id', (req, res) => {
+  const id = req.params.id
+  const at = isoNow()
+  res.json({
+    id,
+    templateId: 'tpl-declarations',
+    type: 'Declarations',
+    policyId: 'pol-100482',
+    number: 'POL-CA-100482-DEC-0001',
+    status: 'Delivered',
+    version: 1,
+    generatedAt: at,
+    issuedAt: at,
+    url: `/documents/${id}.pdf`,
+    deliveries: [{ channel: 'email', to: 'insured@example.com', at, status: 'sent' }],
+  })
+})
+
+// POST /api/documents/:id/deliver  { channel, to }
+app.post('/api/documents/:id/deliver', (req, res) => {
+  const id = req.params.id
+  const channel = (req.body?.channel ?? 'portal').toString()
+  const to = (req.body?.to ?? '').toString()
+  if (!DELIVERY_CHANNELS.includes(channel)) {
+    return res.status(400).json({ error: 'invalid_channel', allowed: DELIVERY_CHANNELS })
+  }
+  const delivery = { channel, to, at: isoNow(), status: 'sent' }
+  res.json({ id, status: 'Delivered', delivery })
+})
+
+// POST /api/documents/:id/sign  { signatureData? }
+app.post('/api/documents/:id/sign', (req, res) => {
+  const id = req.params.id
+  res.json({
+    id,
+    status: 'Delivered',
+    signedAt: isoNow(),
+    signatureCaptured: Boolean(req.body?.signatureData),
+  })
+})
+
 app.listen(PORT, () => {
   console.log(`VENUSPRO AI backend on http://localhost:${PORT}  (ai ${hasKey ? 'enabled' : 'disabled — set ANTHROPIC_API_KEY'})`)
 })
